@@ -1,19 +1,16 @@
 name: Generate Monthly Lunch Calendar
 
 on:
-  # End of month runs (last day varies by month)
   schedule:
-    - cron: '0 16 28 * *'   # Covers February (8am PT)
+    - cron: '0 16 28 * *'   # Covers February last day (8am PT)
     - cron: '0 16 30 * *'   # Covers 30-day months
     - cron: '0 16 31 * *'   # Covers 31-day months
-    # Early-month retries in case school posts the menu late
-    - cron: '0 16 1 * *'    # 1st of month
-    - cron: '0 16 3 * *'    # 3rd of month
-    - cron: '0 16 5 * *'    # 5th of month
-    - cron: '0 16 7 * *'    # 7th of month
+    - cron: '0 16 1 * *'    # Retry: 1st of month
+    - cron: '0 16 3 * *'    # Retry: 3rd of month
+    - cron: '0 16 5 * *'    # Retry: 5th of month
+    - cron: '0 16 7 * *'    # Retry: 7th of month
 
-  # Allow manual trigger from the GitHub Actions tab
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger — always runs regardless of date
 
 permissions:
   contents: write
@@ -35,6 +32,9 @@ jobs:
         run: pip install requests
 
       - name: Run menu fetcher
+        env:
+          # Set FORCE_RUN=true when triggered manually so the date check is bypassed
+          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
         run: python fetch_menu.py
 
       - name: Commit and push updated files
