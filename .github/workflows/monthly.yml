@@ -1,48 +1,67 @@
-name: Generate Monthly Lunch Calendar
+name: Mirror Lunch Calendar (legacy link)
+
+# This repo no longer generates menus. It mirrors the maintained pipeline's
+# published feed (bruff85/graphql-calendar-pipeline) so the legacy
+# subscription URL keeps working, picking up each new month as the pipeline
+# publishes it. There is no end date here — see RETIRE_AFTER in mirror_feed.py
+# for the ways to end it.
+#
+# The schedule tracks the PIPELINE's publishing rhythm, since that is the only
+# thing that changes what we copy:
+#   * 27th-31st and 1st-15th: the pipeline is actively searching for the next
+#     month and retrying, so a new month can land any day. Check daily.
+#   * 16th-26th: the pipeline has found the month and gone quiet until the
+#     27th. Nothing new is coming, so a weekly pass is enough — it exists only
+#     to catch a CORRECTION to an already-published month.
+#
+# Each entry is an independent schedule. Note that within a SINGLE cron
+# expression, restricting both day-of-month and day-of-week ORs them rather
+# than ANDing them, which is why the weekly pass is its own entry with '*' for
+# day-of-month instead of being folded into the ranges above.
 
 on:
   schedule:
-    # Initial run on the 27th at 8:15pm PT (28th 4:15 UTC)
-    - cron: '15 4 28 * *'   # 27th 8:15pm PT = 28th 4:15 UTC
-    # Daily retries at 7am PT (14:15 UTC), 10am PT (18:15 UTC) and 6pm PT (02:15 UTC next day)
-    - cron: '15 14 * * *'   # 7am PT daily
-    - cron: '15 18 * * *'   # 10am PT daily
-    - cron: '15 2 * * *'    # 6pm PT daily
-
+    - cron: '30 15 27-31 * *'  # 8:30am PT, end-of-month search window
+    - cron: '30 15 1-15 * *'   # 8:30am PT, retry window
+    - cron: '30 15 * * 1'      # 8:30am PT Mondays, catches mid-month corrections
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  generate-calendar:
+  mirror-calendar:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout this repository
         uses: actions/checkout@v4
+
+      # Read the feed straight from the pipeline repo rather than its GitHub
+      # Pages URL: no publish lag, and no dependency on Pages being up.
+      - name: Checkout pipeline repository
+        uses: actions/checkout@v4
+        with:
+          repository: bruff85/graphql-calendar-pipeline
+          path: pipeline
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run menu fetcher
+      - name: Mirror the feed
         env:
-          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
-          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
-          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
-          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
-          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
-        run: python fetch_menu.py
+          SOURCE_URL: file://${{ github.workspace }}/pipeline/docs/lunch.ics
+          # Optional: set a RETIRE_AFTER repo variable (ISO date, e.g.
+          # 2026-09-01) to freeze the feed without editing code.
+          RETIRE_AFTER: ${{ vars.RETIRE_AFTER }}
+        run: python mirror_feed.py
 
-      - name: Commit and push updated files
+      - name: Commit and push updated feed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/lunch.ics current_menu_id.txt next_month_found.txt
-          git diff --staged --quiet || git commit -m "Update lunch calendar for $(date +'%B %Y')"
+          git add docs/lunch.ics
+          git diff --staged --quiet || git commit -m "Mirror lunch calendar feed ($(date +'%Y-%m-%d'))"
           git push
