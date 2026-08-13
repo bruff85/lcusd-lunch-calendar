@@ -5,12 +5,12 @@ Mirror the maintained pipeline's published feed into this repo's docs/lunch.ics.
 This legacy repo no longer fetches or parses menus itself. The maintained
 pipeline (bruff85/graphql-calendar-pipeline) does the fetching, parsing, and
 ICS generation; this script copies its published feed here so the legacy
-subscription URL serves the same calendar, with two limits:
+subscription URL serves the same calendar.
 
-  * Events dated Sept 1, 2026 or later are dropped — this link only ever
-    carries menus through August 2026.
-  * After Sept 1, 2026 the script refuses to run; the feed freezes as-is
-    and the workflow schedule ends with it.
+It tracks every month the pipeline publishes, indefinitely — there is no end
+date baked in, because how long this link needs to stay up depends on when the
+agreement is signed, which is not something a hard-coded date can predict.
+See RETIRE_AFTER below for how to end it when that day comes.
 """
 
 import os
@@ -25,11 +25,29 @@ SOURCE_URL = os.environ.get(
 )
 OUTPUT = "docs/lunch.ics"
 
-# The legacy link is only promised through the end of August 2026.
-LAST_MIRROR_DAY = date(2026, 9, 1)   # last day this script will sync at all
-EVENT_CUTOFF = "20260901"            # drop events with DTSTART on/after this
+# ─────────────────────────────────────────────
+# HOW TO TURN THIS OFF
+# ─────────────────────────────────────────────
+# Leave as None and the link keeps tracking new months for as long as the
+# workflow runs. To end it, pick whichever matches what you mean:
+#
+#   1. Freeze the feed where it is, keeping the URL alive and serving the last
+#      month it saw:  set RETIRE_AFTER = date(YYYY, M, D)  (or set the
+#      RETIRE_AFTER env var / repo variable to an ISO date, no code edit).
+#      After that date the script stops writing. Subscribers keep the calendar
+#      they have; it just stops gaining months.
+#
+#   2. Stop syncing but leave today's feed served: disable the workflow in the
+#      Actions tab. Same visible result as (1), no commit required.
+#
+#   3. Make the link genuinely dead: delete docs/lunch.ics, or turn off GitHub
+#      Pages for this repo. Subscribers then get a 404 rather than stale food.
+#
+# (1) and (2) are reversible; (3) is the one that actually ends the link.
+_RETIRE_ENV = os.environ.get("RETIRE_AFTER", "").strip()
+RETIRE_AFTER = date.fromisoformat(_RETIRE_ENV) if _RETIRE_ENV else None
 
-EVENT_RE = re.compile(r"BEGIN:VEVENT.*?END:VEVENT\r?\n", re.DOTALL)
+EVENT_RE = re.compile(r"BEGIN:VEVENT.*?END:VEVENT", re.DOTALL)
 DTSTART_RE = re.compile(r"DTSTART[^:]*:(\d{8})")
 
 
@@ -41,36 +59,40 @@ def fetch_source():
         return resp.read().decode("utf-8")
 
 
-def drop_future_events(ics):
-    def keep_or_drop(match):
-        block = match.group(0)
-        m = DTSTART_RE.search(block)
-        if m and m.group(1) >= EVENT_CUTOFF:
-            return ""
-        return block
+def describe(ics):
+    """A one-line summary of what the feed covers, for the run log.
 
-    return EVENT_RE.sub(keep_or_drop, ics)
+    Worth printing on every run: this is the only place the months actually
+    being served are visible without opening the file.
+    """
+    dates = sorted(DTSTART_RE.findall(ics))
+    if not dates:
+        return "0 events"
+    months = sorted({d[:6] for d in dates})
+    span = ", ".join(f"{m[:4]}-{m[4:]}" for m in months)
+    return f"{len(dates)} events covering {span}"
 
 
 def main():
-    today = date.today()
-    if today > LAST_MIRROR_DAY:
-        print(f"Past {LAST_MIRROR_DAY} — this legacy feed is frozen. Nothing to do.")
+    if RETIRE_AFTER and date.today() > RETIRE_AFTER:
+        print(f"Past RETIRE_AFTER ({RETIRE_AFTER}) — this feed is frozen. Nothing to do.")
         return 0
 
     print(f"Mirroring {SOURCE_URL}")
     ics = fetch_source()
 
+    # Refuse to overwrite a working feed with something that isn't a calendar.
+    # A stale-but-valid feed beats a broken one: the failure this guards against
+    # is the source 404ing or returning an error page, which would otherwise be
+    # copied over the top of a calendar parents are subscribed to.
     if "BEGIN:VCALENDAR" not in ics or "END:VCALENDAR" not in ics:
         print("Source does not look like an ICS file — leaving existing feed untouched.")
         return 1
+    if not EVENT_RE.search(ics):
+        print("Source has no events — leaving existing feed untouched.")
+        return 1
 
-    before = len(EVENT_RE.findall(ics))
-    ics = drop_future_events(ics)
-    after = len(EVENT_RE.findall(ics))
-    if before != after:
-        print(f"Dropped {before - after} event(s) dated {EVENT_CUTOFF} or later.")
-    print(f"Feed carries {after} event(s).")
+    print(f"Source: {describe(ics)}")
 
     existing = ""
     if os.path.exists(OUTPUT):
@@ -87,7 +109,11 @@ def main():
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
     with open(OUTPUT, "w", encoding="utf-8", newline="") as f:
         f.write(ics)
-    print(f"Updated {OUTPUT}.")
+
+    if existing:
+        print(f"Updated {OUTPUT} (was: {describe(existing)}).")
+    else:
+        print(f"Created {OUTPUT}.")
     return 0
 
 

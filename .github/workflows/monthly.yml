@@ -1,22 +1,29 @@
-name: Mirror Lunch Calendar (legacy link, through Aug 2026)
+name: Mirror Lunch Calendar (legacy link)
 
 # This repo no longer generates menus. It mirrors the maintained pipeline's
 # published feed (bruff85/graphql-calendar-pipeline) so the legacy
-# subscription URL keeps working through the end of August 2026, then stops.
+# subscription URL keeps working, picking up each new month as the pipeline
+# publishes it. There is no end date here — see RETIRE_AFTER in mirror_feed.py
+# for the ways to end it.
 #
-# August 2026 is already mirrored in full, so the sync has no new month left to
-# wait for: the pipeline's next find is September, which the Sept 1 cutoff drops
-# on the way in. The only thing a further run can pick up is an upstream
-# CORRECTION to an August day, so this is weekly rather than daily — a handful
-# of runs to cover that, instead of twice-a-day polling for a month that will
-# never be served here.
+# The schedule tracks the PIPELINE's publishing rhythm, since that is the only
+# thing that changes what we copy:
+#   * 27th-31st and 1st-15th: the pipeline is actively searching for the next
+#     month and retrying, so a new month can land any day. Check daily.
+#   * 16th-26th: the pipeline has found the month and gone quiet until the
+#     27th. Nothing new is coming, so a weekly pass is enough — it exists only
+#     to catch a CORRECTION to an already-published month.
 #
-# A run with nothing to do exits in seconds and pushes nothing, so the schedule
-# can simply be left to lapse on Sept 1 rather than being switched off by hand.
+# Each entry is an independent schedule. Note that within a SINGLE cron
+# expression, restricting both day-of-month and day-of-week ORs them rather
+# than ANDing them, which is why the weekly pass is its own entry with '*' for
+# day-of-month instead of being folded into the ranges above.
 
 on:
   schedule:
-    - cron: '30 15 * * 1'   # Mondays 8:30am PT
+    - cron: '30 15 27-31 * *'  # 8:30am PT, end-of-month search window
+    - cron: '30 15 1-15 * *'   # 8:30am PT, retry window
+    - cron: '30 15 * * 1'      # 8:30am PT Mondays, catches mid-month corrections
   workflow_dispatch:
 
 permissions:
@@ -46,6 +53,9 @@ jobs:
       - name: Mirror the feed
         env:
           SOURCE_URL: file://${{ github.workspace }}/pipeline/docs/lunch.ics
+          # Optional: set a RETIRE_AFTER repo variable (ISO date, e.g.
+          # 2026-09-01) to freeze the feed without editing code.
+          RETIRE_AFTER: ${{ vars.RETIRE_AFTER }}
         run: python mirror_feed.py
 
       - name: Commit and push updated feed
