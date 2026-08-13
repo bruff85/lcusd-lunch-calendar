@@ -1,48 +1,52 @@
-name: Generate Monthly Lunch Calendar
+name: Mirror Lunch Calendar (legacy link, through Aug 2026)
+
+# This repo no longer generates menus. It mirrors the maintained pipeline's
+# published feed (bruff85/graphql-calendar-pipeline) so the legacy
+# subscription URL keeps working through the end of August 2026, then stops.
+#
+# The cron runs daily rather than on the pipeline's 27th/retry schedule: this
+# job is a cheap copy, and a daily sync means a correction upstream reaches the
+# legacy link within a day without this repo having to know anything about when
+# menus publish.
 
 on:
   schedule:
-    # Initial run on the 27th at 8:15pm PT (28th 4:15 UTC)
-    - cron: '15 4 28 * *'   # 27th 8:15pm PT = 28th 4:15 UTC
-    # Daily retries at 7am PT (14:15 UTC), 10am PT (18:15 UTC) and 6pm PT (02:15 UTC next day)
-    - cron: '15 14 * * *'   # 7am PT daily
-    - cron: '15 18 * * *'   # 10am PT daily
-    - cron: '15 2 * * *'    # 6pm PT daily
-
+    - cron: '30 15 * * *'   # 8:30am PT daily — after the pipeline's 7am PT run
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  generate-calendar:
+  mirror-calendar:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout this repository
         uses: actions/checkout@v4
+
+      # Read the feed straight from the pipeline repo rather than its GitHub
+      # Pages URL: no publish lag, and no dependency on Pages being up.
+      - name: Checkout pipeline repository
+        uses: actions/checkout@v4
+        with:
+          repository: bruff85/graphql-calendar-pipeline
+          path: pipeline
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run menu fetcher
+      - name: Mirror the feed
         env:
-          FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
-          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
-          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
-          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
-          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
-        run: python fetch_menu.py
+          SOURCE_URL: file://${{ github.workspace }}/pipeline/docs/lunch.ics
+        run: python mirror_feed.py
 
-      - name: Commit and push updated files
+      - name: Commit and push updated feed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/lunch.ics current_menu_id.txt next_month_found.txt
-          git diff --staged --quiet || git commit -m "Update lunch calendar for $(date +'%B %Y')"
+          git add docs/lunch.ics
+          git diff --staged --quiet || git commit -m "Mirror lunch calendar feed ($(date +'%Y-%m-%d'))"
           git push
