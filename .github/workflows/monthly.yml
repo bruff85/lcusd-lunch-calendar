@@ -4,14 +4,19 @@ name: Mirror Lunch Calendar (legacy link, through Aug 2026)
 # published feed (bruff85/graphql-calendar-pipeline) so the legacy
 # subscription URL keeps working through the end of August 2026, then stops.
 #
-# The cron runs daily rather than on the pipeline's 27th/retry schedule: this
-# job is a cheap copy, and a daily sync means a correction upstream reaches the
-# legacy link within a day without this repo having to know anything about when
-# menus publish.
+# August 2026 is already mirrored in full, so the sync has no new month left to
+# wait for: the pipeline's next find is September, which the Sept 1 cutoff drops
+# on the way in. The only thing a further run can pick up is an upstream
+# CORRECTION to an August day, so this is weekly rather than daily — a handful
+# of runs to cover that, instead of twice-a-day polling for a month that will
+# never be served here.
+#
+# A run with nothing to do exits in seconds and pushes nothing, so the schedule
+# can simply be left to lapse on Sept 1 rather than being switched off by hand.
 
 on:
   schedule:
-    - cron: '30 15 * * *'   # 8:30am PT daily — after the pipeline's 7am PT run
+    - cron: '30 15 * * 1'   # Mondays 8:30am PT
   workflow_dispatch:
 
 permissions:

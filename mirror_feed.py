@@ -74,11 +74,14 @@ def main():
 
     existing = ""
     if os.path.exists(OUTPUT):
-        with open(OUTPUT, "r", encoding="utf-8") as f:
+        # newline="" is load-bearing: the default translates the file's CRLF
+        # line endings to LF on read, so the comparison below would never match
+        # the CRLF-carrying source and every run would report a change.
+        with open(OUTPUT, "r", encoding="utf-8", newline="") as f:
             existing = f.read()
 
     if existing == ics:
-        print("Already up to date — no change.")
+        print("Already up to date — nothing left to mirror.")
         return 0
 
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)

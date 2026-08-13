@@ -40,6 +40,16 @@ python mirror_feed.py                      # pulls the published Pages feed
 SOURCE_URL=file:///path/to/lunch.ics python mirror_feed.py   # or a local copy
 ```
 
-The workflow (`.github/workflows/monthly.yml`) runs daily at 8:30am PT and
-reads the feed out of a checkout of the pipeline repo rather than its Pages
-URL, so there's no publish lag.
+The workflow (`.github/workflows/monthly.yml`) reads the feed out of a checkout
+of the pipeline repo rather than its Pages URL, so there's no publish lag.
+
+## Why the schedule is weekly, not daily
+
+August is already mirrored in full, and the pipeline's next find is September —
+which the cutoff above drops. So there is no upcoming month for this link to
+wait on, and the only thing a further run can pick up is an upstream
+*correction* to an August day. Weekly covers that; daily would just be polling
+for a month that will never be served here.
+
+A run with nothing to do prints `nothing left to mirror` and pushes no commit,
+so the schedule can be left to lapse on Sept 1 rather than switched off by hand.
