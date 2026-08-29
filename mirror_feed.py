@@ -44,8 +44,25 @@ OUTPUT = "docs/lunch.ics"
 #      Pages for this repo. Subscribers then get a 404 rather than stale food.
 #
 # (1) and (2) are reversible; (3) is the one that actually ends the link.
+#
+# RETIRED 2026-08-29. LunchLook is live, so the free preview link ends with
+# August 2026. The date below is deliberately in the PAST so the freeze takes
+# effect on the very next run rather than after a further day of mirroring --
+# the schedule runs daily on the 27th-31st, and the pipeline publishes the
+# NEXT month in that window, so any later date would have pulled September
+# straight back in. September's events were also removed from docs/lunch.ics
+# in the same commit; freezing alone would not have taken them back, because
+# they were already published and already synced to subscribers' devices.
+#
+# Set in code rather than as a `RETIRE_AFTER` repo variable on purpose: the
+# retirement is then version-controlled, visible in the diff, and travels with
+# a fork or a restore from backup. The env var still wins if set, so the repo
+# variable remains available as an override.
+#
+# TO UN-RETIRE: set this back to None (or set a future RETIRE_AFTER repo
+# variable) and the mirror resumes tracking new months on the next run.
 _RETIRE_ENV = os.environ.get("RETIRE_AFTER", "").strip()
-RETIRE_AFTER = date.fromisoformat(_RETIRE_ENV) if _RETIRE_ENV else None
+RETIRE_AFTER = date.fromisoformat(_RETIRE_ENV) if _RETIRE_ENV else date(2026, 8, 28)
 
 EVENT_RE = re.compile(r"BEGIN:VEVENT.*?END:VEVENT", re.DOTALL)
 DTSTART_RE = re.compile(r"DTSTART[^:]*:(\d{8})")
