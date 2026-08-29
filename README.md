@@ -1,7 +1,32 @@
 # lcusd-lunch-calendar
 
-Legacy subscription link, kept alive as a courtesy. It tracks each new month
-the pipeline publishes and runs until you decide to end it — see
+> ## ⛔ RETIRED — ended with August 2026
+>
+> LunchLook is live, so this free preview link is over. As of 2026-08-29:
+>
+> - `RETIRE_AFTER` is set to a past date in `mirror_feed.py`, so the workflow
+>   no longer mirrors new months. It still runs on schedule and does nothing.
+> - September's menus were **removed** from `docs/lunch.ics`. Freezing alone
+>   would not have taken them back — they were already published and already
+>   synced onto subscribers' devices. Subscribed calendars delete events that
+>   disappear from a feed, so they clear on each device's next refresh
+>   (typically 8-24h for Apple/Google, whatever this feed's `PT4H` TTL asks).
+> - What remains is August's menus plus one all-day note on **Sep 1** saying
+>   the calendar has ended and where to subscribe. That date is deliberate:
+>   it appears exactly where someone would look for September's food, instead
+>   of a calendar that silently stops filling in.
+>
+> The URL still resolves — this is a graceful ending, not a 404. To make it
+> genuinely dead, delete `docs/lunch.ics` or turn off GitHub Pages (row 3 of
+> the table below). To un-retire, see `RETIRE_AFTER` in `mirror_feed.py`.
+>
+> **Prod is unaffected.** Paying subscribers are served from
+> `graphql-calendar-pipeline` via `schools.api_config.ics_url`, verified
+> before this change: every active school resolves to one distinct URL, and it
+> is not this repo.
+
+Legacy subscription link, kept alive as a courtesy. It tracked each new month
+the pipeline published, and ran until it was ended — see
 [Turning it off](#turning-it-off).
 
 ```
