@@ -11,10 +11,17 @@
 >   synced onto subscribers' devices. Subscribed calendars delete events that
 >   disappear from a feed, so they clear on each device's next refresh
 >   (typically 8-24h for Apple/Google, whatever this feed's `PT4H` TTL asks).
-> - What remains is August's menus plus one all-day note on **Sep 1** saying
->   the calendar has ended and where to subscribe. That date is deliberate:
->   it appears exactly where someone would look for September's food, instead
->   of a calendar that silently stops filling in.
+> - What remains is August's menus plus an all-day note repeating daily
+>   **Sep 1–7** saying where to subscribe. Those dates are deliberate: the
+>   note sits exactly where someone would look for September's food, instead
+>   of a calendar that silently stops filling in, and it repeats through the
+>   first week of school so a parent who only glances at the calendar on,
+>   say, Thursday still sees it. It is one `VEVENT` with
+>   `RRULE:FREQ=DAILY;COUNT=7` rather than seven copies, so subscribers'
+>   devices update the note they already have instead of gaining new ones.
+>   The wording is front-loaded on purpose: the title carries the ask and the
+>   URL because in a phone's month view that is all a parent sees without
+>   tapping, and the body opens with the pitch rather than the explanation.
 >
 > The URL still resolves — this is a graceful ending, not a 404. To make it
 > genuinely dead, delete `docs/lunch.ics` or turn off GitHub Pages (row 3 of
