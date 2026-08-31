@@ -125,11 +125,11 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:cab5e2da1132ad1bce7f8dd5ebda69b918602681@yourcampusconcierge.com
-DTSTAMP:20260831T000000Z
-SEQUENCE:2
-DTSTART;VALUE=DATE:20260901
-DTEND;VALUE=DATE:20260902
-RRULE:FREQ=DAILY;COUNT=7
+DTSTAMP:20260831T193000Z
+SEQUENCE:4
+DTSTART;TZID=America/Los_Angeles:20260901T113000
+DTEND;TZID=America/Los_Angeles:20260901T123000
+RRULE:FREQ=DAILY;COUNT=4
 SUMMARY:Keep the menus coming at yourcampusconcierge.com
 DESCRIPTION:Fewer wasted lunches. No hangry days. Happier kids.\n\nAugust was the last free month — subscribe to keep the menus on your calendar all year\, and help fund La Cañada schools via LCFEF: https://yourcampusconcierge.com
 TRANSP:TRANSPARENT
