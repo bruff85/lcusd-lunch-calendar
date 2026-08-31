@@ -19,8 +19,9 @@
 >   say, Thursday still sees it. It is one `VEVENT` with
 >   `RRULE:FREQ=DAILY;COUNT=7` rather than seven copies, so subscribers'
 >   devices update the note they already have instead of gaining new ones.
->   The wording is kept to one short line — a long description is truncated
->   in the phone previews where most parents actually see it.
+>   The wording is front-loaded on purpose: the title carries the ask and the
+>   URL because in a phone's month view that is all a parent sees without
+>   tapping, and the body opens with the pitch rather than the explanation.
 >
 > The URL still resolves — this is a graceful ending, not a 404. To make it
 > genuinely dead, delete `docs/lunch.ics` or turn off GitHub Pages (row 3 of
