@@ -125,11 +125,13 @@ TRANSP:TRANSPARENT
 END:VEVENT
 BEGIN:VEVENT
 UID:cab5e2da1132ad1bce7f8dd5ebda69b918602681@yourcampusconcierge.com
-DTSTAMP:20260829T000000Z
+DTSTAMP:20260831T000000Z
+SEQUENCE:1
 DTSTART;VALUE=DATE:20260901
 DTEND;VALUE=DATE:20260902
-SUMMARY:This lunch calendar has ended — subscribe at yourcampusconcierge.com
-DESCRIPTION:This was a free preview link\, and it stopped updating after August 2026. It will not show September menus or anything after.\n\nLunchLook is now live. A subscription keeps the menus arriving all year\, on your own calendar\, and every subscription helps fund La Cañada schools.\n\nSubscribe: https://yourcampusconcierge.com\n\nYou can delete this subscribed calendar from your device at any time.
+RRULE:FREQ=DAILY;COUNT=7
+SUMMARY:Lunch calendar ended — yourcampusconcierge.com
+DESCRIPTION:Continue making mornings easier\, feeding your child\, and help raise funds for the school via LCFEF by subscribing to the lunch calendar via https://yourcampusconcierge.com
 TRANSP:TRANSPARENT
 END:VEVENT
 END:VCALENDAR
