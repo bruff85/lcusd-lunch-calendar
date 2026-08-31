@@ -11,14 +11,17 @@
 >   synced onto subscribers' devices. Subscribed calendars delete events that
 >   disappear from a feed, so they clear on each device's next refresh
 >   (typically 8-24h for Apple/Google, whatever this feed's `PT4H` TTL asks).
-> - What remains is August's menus plus a note repeating daily **Sep 1–7**
+> - What remains is August's menus plus a note repeating daily **Sep 1–4**
 >   saying where to subscribe. Those dates are deliberate: the note sits
 >   exactly where someone would look for September's food, instead of a
 >   calendar that silently stops filling in, and it repeats through the
 >   first week of school so a parent who only glances at the calendar on,
 >   say, Thursday still sees it. It is one `VEVENT` with
->   `RRULE:FREQ=DAILY;COUNT=7` rather than seven copies, so subscribers'
+>   `RRULE:FREQ=DAILY;COUNT=4` rather than four copies, so subscribers'
 >   devices update the note they already have instead of gaining new ones.
+>   Sep 1–4 is Tue–Fri, so a plain `COUNT` lands on weekdays without needing
+>   a `BYDAY` — and it stops on the Friday rather than running through a
+>   weekend where no menu would ever have appeared.
 >   It runs **11:30–12:30** in the same slot the menus used, rather than
 >   as an all-day event: all-day items stack in a separate banner at the
 >   top of the day, away from where the menu used to sit, and on a phone
